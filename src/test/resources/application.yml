@@ -8,3 +8,12 @@ spring:
     url: jdbc:postgresql://localhost:5432/school
     username: school
     password: school
+
+# Tests run with an ephemeral signing key (no auth.jwt.secret) and the
+# default seeded admin, seeded only when the users table is empty
+auth:
+  jwt:
+    ttl: 1h
+  admin:
+    username: admin
+    password: admin

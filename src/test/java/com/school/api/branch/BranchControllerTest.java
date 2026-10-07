@@ -4,6 +4,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.jwt;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -17,6 +18,7 @@ import com.school.api.common.domain.Status;
 import com.school.api.common.exception.NotFoundException;
 import com.school.api.common.web.ApiPaths;
 import com.school.api.common.web.PageResponse;
+import com.school.api.security.JwtConfig;
 import com.school.api.security.SecurityConfig;
 import java.time.Instant;
 import java.util.List;
@@ -28,11 +30,13 @@ import org.springframework.context.annotation.Import;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.MediaType;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.request.RequestPostProcessor;
 
 @WebMvcTest(controllers = BranchController.class)
-@Import(SecurityConfig.class)
+@Import({SecurityConfig.class, JwtConfig.class})
 class BranchControllerTest {
 
     @Autowired
@@ -52,7 +56,8 @@ class BranchControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {"name":"Main Campus","code":"main","primary":true,"city":"Addis Ababa"}
-                                """))
+                                """)
+                        .with(platformAdmin()))
                 .andExpect(status().isCreated())
                 .andExpect(header().string("Location", branches + "/" + response.id()))
                 .andExpect(jsonPath("$.id").value(response.id().toString()))
@@ -68,7 +73,8 @@ class BranchControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {"name":"","code":"not a code!"}
-                                """))
+                                """)
+                        .with(platformAdmin()))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.title").value("Validation failed"))
                 .andExpect(jsonPath("$.errors.name").exists())
@@ -82,9 +88,17 @@ class BranchControllerTest {
         when(branchService.getById(schoolId, id))
                 .thenThrow(new NotFoundException("Branch not found: " + id));
 
-        mockMvc.perform(get(ApiPaths.V1 + "/schools/{schoolId}/branches/{id}", schoolId, id))
+        mockMvc.perform(get(ApiPaths.V1 + "/schools/{schoolId}/branches/{id}", schoolId, id).with(jwt()))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.detail").value("Branch not found: " + id));
+    }
+
+    @Test
+    void getReturns401WithoutToken() throws Exception {
+        UUID schoolId = UUID.randomUUID();
+
+        mockMvc.perform(get(ApiPaths.V1 + "/schools/{schoolId}/branches", schoolId))
+                .andExpect(status().isUnauthorized());
     }
 
     @Test
@@ -93,7 +107,7 @@ class BranchControllerTest {
         when(branchService.list(eq(schoolId), any(Pageable.class)))
                 .thenReturn(PageResponse.from(new PageImpl<>(List.of(responseOf(UUID.randomUUID(), schoolId)))));
 
-        mockMvc.perform(get(ApiPaths.V1 + "/schools/{schoolId}/branches", schoolId))
+        mockMvc.perform(get(ApiPaths.V1 + "/schools/{schoolId}/branches", schoolId).with(jwt()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content[0].name").value("Main Campus"))
                 .andExpect(jsonPath("$.totalElements").value(1));
@@ -104,10 +118,15 @@ class BranchControllerTest {
         UUID schoolId = UUID.randomUUID();
         UUID id = UUID.randomUUID();
 
-        mockMvc.perform(delete(ApiPaths.V1 + "/schools/{schoolId}/branches/{id}", schoolId, id))
+        mockMvc.perform(delete(ApiPaths.V1 + "/schools/{schoolId}/branches/{id}", schoolId, id)
+                        .with(platformAdmin()))
                 .andExpect(status().isNoContent());
 
         verify(branchService).deactivate(schoolId, id);
+    }
+
+    private static RequestPostProcessor platformAdmin() {
+        return jwt().authorities(new SimpleGrantedAuthority("ROLE_PLATFORM_ADMIN"));
     }
 
     private BranchResponse responseOf(UUID id, UUID schoolId) {

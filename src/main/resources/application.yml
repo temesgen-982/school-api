@@ -15,6 +15,20 @@ spring:
     # Don't keep the JPA session open for the whole HTTP request
     open-in-view: false
 
+# JWT login and bearer-token authentication
+auth:
+  jwt:
+    # HS256 signing key (min 32 chars), read from AUTH_JWT_SECRET — never commit
+    # a real secret here. When empty, an ephemeral key is generated at startup
+    # and previously issued tokens stop working on restart (dev-friendly).
+    secret: ${AUTH_JWT_SECRET:}
+    # Access-token lifetime
+    ttl: 1h
+  # First platform admin, seeded only while the users table is empty
+  admin:
+    username: admin
+    password: admin # change this outside local development
+
 # Expose only health/info on the actuator over HTTP
 management:
   endpoints:
