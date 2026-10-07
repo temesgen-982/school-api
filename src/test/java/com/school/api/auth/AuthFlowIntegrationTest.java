@@ -1,6 +1,7 @@
 package com.school.api.auth;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -10,6 +11,8 @@ import com.jayway.jsonpath.JsonPath;
 import com.school.api.common.domain.Role;
 import com.school.api.common.domain.Status;
 import com.school.api.common.web.ApiPaths;
+import com.school.api.school.School;
+import com.school.api.school.SchoolRepository;
 import com.school.api.user.UserAccount;
 import com.school.api.user.UserAccountRepository;
 import java.time.Instant;
@@ -36,7 +39,8 @@ import org.springframework.test.web.servlet.MockMvc;
 
 /**
  * End-to-end check of the auth plumbing against the real database: login issues a
- * token the resource server accepts, and the role rules are enforced on the wire.
+ * token the resource server accepts, the role rules are enforced on the wire, and
+ * audit columns capture who deactivated a resource.
  */
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -51,6 +55,9 @@ class AuthFlowIntegrationTest {
     private UserAccountRepository userAccountRepository;
 
     @Autowired
+    private SchoolRepository schoolRepository;
+
+    @Autowired
     private PasswordEncoder passwordEncoder;
 
     @Autowired
@@ -60,9 +67,14 @@ class AuthFlowIntegrationTest {
     private JwtDecoder jwtDecoder;
 
     private UserAccount createdUser;
+    private UUID createdSchoolId;
 
     @AfterEach
     void cleanUp() {
+        if (createdSchoolId != null) {
+            schoolRepository.findById(createdSchoolId).ifPresent(schoolRepository::delete);
+            createdSchoolId = null;
+        }
         if (createdUser != null) {
             userAccountRepository.delete(createdUser);
             createdUser = null;
@@ -78,6 +90,7 @@ class AuthFlowIntegrationTest {
         Jwt jwt = jwtDecoder.decode(token);
         assertThat(jwt.getSubject()).isEqualTo(username);
         assertThat(jwt.getClaimAsStringList("roles")).containsExactly("SCHOOL_ADMIN");
+        assertThat(jwt.getClaimAsString("user_id")).isEqualTo(createdUser.getId().toString());
 
         mockMvc.perform(get(SCHOOLS).header(HttpHeaders.AUTHORIZATION, "Bearer " + token))
                 .andExpect(status().isOk());
@@ -129,6 +142,33 @@ class AuthFlowIntegrationTest {
 
         mockMvc.perform(get(SCHOOLS).header(HttpHeaders.AUTHORIZATION, "Bearer " + token))
                 .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void deactivateRecordsDeletedAtAndDeletedBy() throws Exception {
+        String username = newUsername();
+        createdUser = saveUser(username, "s3cret-pass", Role.PLATFORM_ADMIN);
+        String token = login(username, "s3cret-pass");
+        String code = "it-" + UUID.randomUUID().toString().substring(0, 8);
+
+        String created = mockMvc.perform(post(SCHOOLS)
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"name":"Temp School","code":"%s"}
+                                """.formatted(code)))
+                .andExpect(status().isCreated())
+                .andReturn().getResponse().getContentAsString();
+        createdSchoolId = UUID.fromString(JsonPath.read(created, "$.id"));
+
+        mockMvc.perform(delete(SCHOOLS + "/" + createdSchoolId)
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + token))
+                .andExpect(status().isNoContent());
+
+        School school = schoolRepository.findById(createdSchoolId).orElseThrow();
+        assertThat(school.getStatus()).isEqualTo(Status.INACTIVE);
+        assertThat(school.getDeletedAt()).isNotNull();
+        assertThat(school.getDeletedBy()).isEqualTo(createdUser.getId());
     }
 
     private String login(String username, String password) throws Exception {

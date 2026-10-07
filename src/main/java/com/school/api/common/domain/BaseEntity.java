@@ -27,6 +27,12 @@ public abstract class BaseEntity {
     @Column(name = "updated_by")
     private UUID updatedBy;
 
+    @Column(name = "deleted_at")
+    private Instant deletedAt;
+
+    @Column(name = "deleted_by")
+    private UUID deletedBy;
+
     @PrePersist
     protected void onCreate() {
         if (id == null) {
@@ -60,5 +66,21 @@ public abstract class BaseEntity {
 
     public UUID getUpdatedBy() {
         return updatedBy;
+    }
+
+    public Instant getDeletedAt() {
+        return deletedAt;
+    }
+
+    public void setDeletedAt(Instant deletedAt) {
+        this.deletedAt = deletedAt;
+    }
+
+    public UUID getDeletedBy() {
+        return deletedBy;
+    }
+
+    public void setDeletedBy(UUID deletedBy) {
+        this.deletedBy = deletedBy;
     }
 }

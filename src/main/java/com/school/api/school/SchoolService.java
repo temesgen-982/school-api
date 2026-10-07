@@ -8,6 +8,7 @@ import com.school.api.common.web.PageResponse;
 import com.school.api.school.dto.SchoolCreateRequest;
 import com.school.api.school.dto.SchoolPatchRequest;
 import com.school.api.school.dto.SchoolResponse;
+import java.time.Instant;
 import java.util.UUID;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -71,8 +72,11 @@ public class SchoolService {
     }
 
     @Transactional
-    public void deactivate(UUID id) {
-        find(id).setStatus(Status.INACTIVE);
+    public void deactivate(UUID id, UUID deletedBy) {
+        School school = find(id);
+        school.setStatus(Status.INACTIVE);
+        school.setDeletedAt(Instant.now());
+        school.setDeletedBy(deletedBy);
     }
 
     private School find(UUID id) {

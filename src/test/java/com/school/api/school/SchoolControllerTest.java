@@ -160,7 +160,7 @@ class SchoolControllerTest {
         mockMvc.perform(delete(ApiPaths.V1 + "/schools/{id}", id).with(platformAdmin()))
                 .andExpect(status().isNoContent());
 
-        verify(schoolService).deactivate(id);
+        verify(schoolService).deactivate(id, null);
     }
 
     private static RequestPostProcessor platformAdmin() {

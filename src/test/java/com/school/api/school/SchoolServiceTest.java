@@ -91,14 +91,17 @@ class SchoolServiceTest {
     }
 
     @Test
-    void deactivateSetsInactive() {
+    void deactivateSetsInactiveAndRecordsWhoDeleted() {
         School school = new School();
         school.setStatus(Status.ACTIVE);
         UUID id = UUID.randomUUID();
+        UUID operatorId = UUID.randomUUID();
         when(schoolRepository.findById(id)).thenReturn(Optional.of(school));
 
-        schoolService.deactivate(id);
+        schoolService.deactivate(id, operatorId);
 
         assertThat(school.getStatus()).isEqualTo(Status.INACTIVE);
+        assertThat(school.getDeletedAt()).isNotNull();
+        assertThat(school.getDeletedBy()).isEqualTo(operatorId);
     }
 }

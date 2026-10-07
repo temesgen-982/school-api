@@ -122,7 +122,7 @@ class BranchControllerTest {
                         .with(platformAdmin()))
                 .andExpect(status().isNoContent());
 
-        verify(branchService).deactivate(schoolId, id);
+        verify(branchService).deactivate(schoolId, id, null);
     }
 
     private static RequestPostProcessor platformAdmin() {

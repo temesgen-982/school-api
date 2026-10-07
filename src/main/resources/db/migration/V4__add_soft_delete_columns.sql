@@ -1,0 +1,8 @@
+ALTER TABLE schools ADD COLUMN deleted_at TIMESTAMPTZ;
+ALTER TABLE schools ADD COLUMN deleted_by UUID;
+
+ALTER TABLE branches ADD COLUMN deleted_at TIMESTAMPTZ;
+ALTER TABLE branches ADD COLUMN deleted_by UUID;
+
+ALTER TABLE users ADD COLUMN deleted_at TIMESTAMPTZ;
+ALTER TABLE users ADD COLUMN deleted_by UUID;

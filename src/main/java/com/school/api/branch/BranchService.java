@@ -10,6 +10,7 @@ import com.school.api.common.util.TextNormalizer;
 import com.school.api.common.web.PageResponse;
 import com.school.api.school.School;
 import com.school.api.school.SchoolRepository;
+import java.time.Instant;
 import java.util.UUID;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -102,8 +103,11 @@ public class BranchService {
     }
 
     @Transactional
-    public void deactivate(UUID schoolId, UUID id) {
-        find(schoolId, id).setStatus(Status.INACTIVE);
+    public void deactivate(UUID schoolId, UUID id, UUID deletedBy) {
+        Branch branch = find(schoolId, id);
+        branch.setStatus(Status.INACTIVE);
+        branch.setDeletedAt(Instant.now());
+        branch.setDeletedBy(deletedBy);
     }
 
     private Branch find(UUID schoolId, UUID id) {

@@ -5,6 +5,7 @@ import com.school.api.common.web.PageResponse;
 import com.school.api.school.dto.SchoolCreateRequest;
 import com.school.api.school.dto.SchoolPatchRequest;
 import com.school.api.school.dto.SchoolResponse;
+import com.school.api.security.CurrentUser;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import java.net.URI;
@@ -13,6 +14,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -60,7 +62,7 @@ public class SchoolController {
 
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void deactivate(@PathVariable UUID id) {
-        schoolService.deactivate(id);
+    public void deactivate(@PathVariable UUID id, Authentication authentication) {
+        schoolService.deactivate(id, CurrentUser.idOf(authentication));
     }
 }

@@ -5,6 +5,7 @@ import com.school.api.branch.dto.BranchPatchRequest;
 import com.school.api.branch.dto.BranchResponse;
 import com.school.api.common.web.ApiPaths;
 import com.school.api.common.web.PageResponse;
+import com.school.api.security.CurrentUser;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import java.net.URI;
@@ -13,6 +14,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -65,7 +67,8 @@ public class BranchController {
 
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void deactivate(@PathVariable UUID schoolId, @PathVariable UUID id) {
-        branchService.deactivate(schoolId, id);
+    public void deactivate(
+            @PathVariable UUID schoolId, @PathVariable UUID id, Authentication authentication) {
+        branchService.deactivate(schoolId, id, CurrentUser.idOf(authentication));
     }
 }

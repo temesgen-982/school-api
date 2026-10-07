@@ -35,6 +35,9 @@ public class JwtService {
         if (account.getSchoolId() != null) {
             claims.claim("school_id", account.getSchoolId().toString());
         }
+        if (account.getId() != null) {
+            claims.claim("user_id", account.getId().toString());
+        }
 
         JwsHeader header = JwsHeader.with(MacAlgorithm.HS256).build();
         String token = jwtEncoder.encode(JwtEncoderParameters.from(header, claims.build())).getTokenValue();

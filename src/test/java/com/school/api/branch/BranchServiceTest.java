@@ -125,15 +125,18 @@ class BranchServiceTest {
     }
 
     @Test
-    void deactivateIsScopedToSchool() {
+    void deactivateIsScopedToSchoolAndRecordsWhoDeleted() {
         UUID schoolId = UUID.randomUUID();
         UUID id = UUID.randomUUID();
+        UUID operatorId = UUID.randomUUID();
         Branch branch = new Branch();
         branch.setSchoolId(schoolId);
         when(branchRepository.findByIdAndSchoolId(id, schoolId)).thenReturn(Optional.of(branch));
 
-        branchService.deactivate(schoolId, id);
+        branchService.deactivate(schoolId, id, operatorId);
 
         assertThat(branch.getStatus()).isEqualTo(com.school.api.common.domain.Status.INACTIVE);
+        assertThat(branch.getDeletedAt()).isNotNull();
+        assertThat(branch.getDeletedBy()).isEqualTo(operatorId);
     }
 }
