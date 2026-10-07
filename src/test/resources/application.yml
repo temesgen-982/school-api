@@ -1,0 +1,10 @@
+spring:
+  # Tests run against an already-running database, so don't start containers
+  docker:
+    compose:
+      enabled: false
+
+  datasource:
+    url: jdbc:postgresql://localhost:5432/school
+    username: school
+    password: school

@@ -1,0 +1,23 @@
+spring:
+  application:
+    name: api
+
+  # PostgreSQL connection (database is provisioned by compose.yaml)
+  datasource:
+    url: jdbc:postgresql://localhost:5432/school
+    username: school
+    password: school
+
+  jpa:
+    # Schema is managed by Flyway migrations, never by Hibernate
+    hibernate:
+      ddl-auto: none
+    # Don't keep the JPA session open for the whole HTTP request
+    open-in-view: false
+
+# Expose only health/info on the actuator over HTTP
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
