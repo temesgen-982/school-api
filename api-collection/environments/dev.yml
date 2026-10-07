@@ -1,0 +1,5 @@
+name: dev
+variables:
+  - name: baseUrl
+    value: http://localhost:8080/api
+    description: Dev host v1
