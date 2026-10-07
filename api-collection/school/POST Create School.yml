@@ -4,9 +4,23 @@ info:
   seq: 2
 
 http:
-  method: GET
-  url: ""
+  method: POST
+  url: "{{baseUrl}}/schools"
   auth: inherit
+  headers:
+    - name: Content-Type
+      value: application/json
+    - name: Authorization
+      value: "Bearer {{token}}"
+  body:
+    type: json
+    data: |-
+      {
+        "name": "Bright Future",
+        "code": "bright-future",
+        "phone": "+251911000000",
+        "email": "info@bright.edu"
+      }
 
 settings:
   encodeUrl: true

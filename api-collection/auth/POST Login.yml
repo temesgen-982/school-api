@@ -1,0 +1,33 @@
+info:
+  name: POST Login
+  type: http
+  seq: 1
+
+http:
+  method: POST
+  url: "{{baseUrl}}/auth/login"
+  auth: inherit
+  headers:
+    - name: Content-Type
+      value: application/json
+  body:
+    type: json
+    data: |-
+      {
+        "username": "admin",
+        "password": "admin"
+      }
+
+runtime:
+  scripts:
+    - type: after-response
+      code: |-
+        // Save the bearer token for every other request in this environment
+        bru.setVar("token", res.body.accessToken);
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: false

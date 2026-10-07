@@ -1,0 +1,30 @@
+info:
+  name: POST Create Branch
+  type: http
+  seq: 2
+
+http:
+  method: POST
+  url: "{{baseUrl}}/schools/{{schoolId}}/branches"
+  auth: inherit
+  headers:
+    - name: Content-Type
+      value: application/json
+    - name: Authorization
+      value: "Bearer {{token}}"
+  body:
+    type: json
+    data: |-
+      {
+        "name": "Main Campus",
+        "code": "main",
+        "primary": true,
+        "city": "Addis Ababa"
+      }
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: false
