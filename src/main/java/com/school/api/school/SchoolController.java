@@ -1,5 +1,6 @@
 package com.school.api.school;
 
+import com.school.api.common.web.ApiPaths;
 import com.school.api.common.web.PageResponse;
 import com.school.api.school.dto.SchoolCreateRequest;
 import com.school.api.school.dto.SchoolPatchRequest;
@@ -23,7 +24,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/api/schools")
+@RequestMapping(ApiPaths.V1 + "/schools")
 public class SchoolController {
 
     private final SchoolService schoolService;

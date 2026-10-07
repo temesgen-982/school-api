@@ -3,6 +3,7 @@ package com.school.api.branch;
 import com.school.api.branch.dto.BranchCreateRequest;
 import com.school.api.branch.dto.BranchPatchRequest;
 import com.school.api.branch.dto.BranchResponse;
+import com.school.api.common.web.ApiPaths;
 import com.school.api.common.web.PageResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
@@ -23,7 +24,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/api/schools/{schoolId}/branches")
+@RequestMapping(ApiPaths.V1 + "/schools/{schoolId}/branches")
 public class BranchController {
 
     private final BranchService branchService;

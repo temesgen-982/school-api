@@ -14,6 +14,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.school.api.common.domain.Status;
 import com.school.api.common.exception.NotFoundException;
+import com.school.api.common.web.ApiPaths;
 import com.school.api.common.web.PageResponse;
 import com.school.api.school.dto.SchoolCreateRequest;
 import com.school.api.school.dto.SchoolPatchRequest;
@@ -47,13 +48,13 @@ class SchoolControllerTest {
         SchoolResponse response = responseOf(UUID.randomUUID());
         when(schoolService.create(any(SchoolCreateRequest.class))).thenReturn(response);
 
-        mockMvc.perform(post("/api/schools")
+        mockMvc.perform(post(ApiPaths.V1 + "/schools")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {"name":"Bright Future","code":"bright-future","phone":"+251911000000","email":"info@bright.edu"}
                                 """))
                 .andExpect(status().isCreated())
-                .andExpect(header().string("Location", "/api/schools/" + response.id()))
+                .andExpect(header().string("Location", ApiPaths.V1 + "/schools/" + response.id()))
                 .andExpect(jsonPath("$.id").value(response.id().toString()))
                 .andExpect(jsonPath("$.name").value("Bright Future"))
                 .andExpect(jsonPath("$.code").value("bright-future"))
@@ -62,7 +63,7 @@ class SchoolControllerTest {
 
     @Test
     void createReturns400OnValidationErrors() throws Exception {
-        mockMvc.perform(post("/api/schools")
+        mockMvc.perform(post(ApiPaths.V1 + "/schools")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {"name":"","code":"not a code!"}
@@ -75,7 +76,7 @@ class SchoolControllerTest {
 
     @Test
     void createReturns400OnMalformedJson() throws Exception {
-        mockMvc.perform(post("/api/schools")
+        mockMvc.perform(post(ApiPaths.V1 + "/schools")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{not json"))
                 .andExpect(status().isBadRequest())
@@ -87,7 +88,7 @@ class SchoolControllerTest {
         UUID id = UUID.randomUUID();
         when(schoolService.getById(id)).thenThrow(new NotFoundException("School not found: " + id));
 
-        mockMvc.perform(get("/api/schools/{id}", id))
+        mockMvc.perform(get(ApiPaths.V1 + "/schools/{id}", id))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.title").value("Resource not found"))
                 .andExpect(jsonPath("$.detail").value("School not found: " + id));
@@ -95,7 +96,7 @@ class SchoolControllerTest {
 
     @Test
     void getReturns400OnInvalidId() throws Exception {
-        mockMvc.perform(get("/api/schools/not-a-uuid"))
+        mockMvc.perform(get(ApiPaths.V1 + "/schools/not-a-uuid"))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.title").value("Invalid parameter"));
     }
@@ -105,7 +106,7 @@ class SchoolControllerTest {
         when(schoolService.list(any(Pageable.class)))
                 .thenReturn(PageResponse.from(new PageImpl<>(List.of(responseOf(UUID.randomUUID())))));
 
-        mockMvc.perform(get("/api/schools"))
+        mockMvc.perform(get(ApiPaths.V1 + "/schools"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content[0].name").value("Bright Future"))
                 .andExpect(jsonPath("$.totalElements").value(1));
@@ -118,7 +119,7 @@ class SchoolControllerTest {
                 null, null, Instant.now(), Instant.now());
         when(schoolService.patch(eq(id), any(SchoolPatchRequest.class))).thenReturn(updated);
 
-        mockMvc.perform(patch("/api/schools/{id}", id)
+        mockMvc.perform(patch(ApiPaths.V1 + "/schools/{id}", id)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {"name":"Renamed"}
@@ -131,7 +132,7 @@ class SchoolControllerTest {
     void deleteReturns204AndDeactivates() throws Exception {
         UUID id = UUID.randomUUID();
 
-        mockMvc.perform(delete("/api/schools/{id}", id))
+        mockMvc.perform(delete(ApiPaths.V1 + "/schools/{id}", id))
                 .andExpect(status().isNoContent());
 
         verify(schoolService).deactivate(id);

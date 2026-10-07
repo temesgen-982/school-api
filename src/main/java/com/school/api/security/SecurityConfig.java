@@ -1,5 +1,6 @@
 package com.school.api.security;
 
+import com.school.api.common.web.ApiPaths;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -18,7 +19,7 @@ public class SecurityConfig {
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/actuator/health", "/actuator/info").permitAll()
-                        .requestMatchers("/api/**").permitAll()
+                        .requestMatchers(ApiPaths.BASE + "/**").permitAll()
                         .anyRequest().authenticated());
         return http.build();
     }
