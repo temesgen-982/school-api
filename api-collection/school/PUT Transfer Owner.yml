@@ -1,0 +1,27 @@
+info:
+  name: PUT Transfer Owner
+  type: http
+  seq: 6
+
+http:
+  method: PUT
+  url: "{{baseUrl}}/schools/{{schoolId}}/owner"
+  auth: inherit
+  headers:
+    - name: Content-Type
+      value: application/json
+    - name: Authorization
+      value: "Bearer {{token}}"
+  body:
+    type: json
+    data: |-
+      {
+        "userId": "{{userId}}"
+      }
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: false

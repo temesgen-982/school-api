@@ -1,5 +1,6 @@
 package com.school.api.security;
 
+import com.school.api.common.domain.Role;
 import java.util.UUID;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.jwt.Jwt;
@@ -27,5 +28,14 @@ public final class CurrentUser {
             return userId == null ? null : UUID.fromString(userId);
         }
         return null;
+    }
+
+    public static boolean isPlatformAdmin(Authentication authentication) {
+        if (authentication == null) {
+            return false;
+        }
+        String authority = "ROLE_" + Role.PLATFORM_ADMIN.name();
+        return authentication.getAuthorities().stream()
+                .anyMatch(granted -> authority.equals(granted.getAuthority()));
     }
 }

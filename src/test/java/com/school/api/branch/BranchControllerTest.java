@@ -88,9 +88,20 @@ class BranchControllerTest {
         when(branchService.getById(schoolId, id))
                 .thenThrow(new NotFoundException("Branch not found: " + id));
 
-        mockMvc.perform(get(ApiPaths.V1 + "/schools/{schoolId}/branches/{id}", schoolId, id).with(jwt()))
+        mockMvc.perform(get(ApiPaths.V1 + "/schools/{schoolId}/branches/{id}", schoolId, id)
+                        .with(schoolScoped(schoolId)))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.detail").value("Branch not found: " + id));
+    }
+
+    @Test
+    void getReturns403WhenScopedToAnotherSchool() throws Exception {
+        UUID schoolId = UUID.randomUUID();
+        UUID id = UUID.randomUUID();
+
+        mockMvc.perform(get(ApiPaths.V1 + "/schools/{schoolId}/branches/{id}", schoolId, id)
+                        .with(schoolScoped(UUID.randomUUID())))
+                .andExpect(status().isForbidden());
     }
 
     @Test
@@ -107,10 +118,27 @@ class BranchControllerTest {
         when(branchService.list(eq(schoolId), any(Pageable.class)))
                 .thenReturn(PageResponse.from(new PageImpl<>(List.of(responseOf(UUID.randomUUID(), schoolId)))));
 
-        mockMvc.perform(get(ApiPaths.V1 + "/schools/{schoolId}/branches", schoolId).with(jwt()))
+        mockMvc.perform(get(ApiPaths.V1 + "/schools/{schoolId}/branches", schoolId)
+                        .with(schoolScoped(schoolId)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content[0].name").value("Main Campus"))
                 .andExpect(jsonPath("$.totalElements").value(1));
+    }
+
+    @Test
+    void createReturns201ForOwnerOfThatSchool() throws Exception {
+        UUID schoolId = UUID.randomUUID();
+        String branches = ApiPaths.V1 + "/schools/" + schoolId + "/branches";
+        BranchResponse response = responseOf(UUID.randomUUID(), schoolId);
+        when(branchService.create(eq(schoolId), any(BranchCreateRequest.class))).thenReturn(response);
+
+        mockMvc.perform(post(branches)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"name":"Annex","code":"annex"}
+                                """)
+                        .with(ownerScoped(schoolId)))
+                .andExpect(status().isCreated());
     }
 
     @Test
@@ -127,6 +155,15 @@ class BranchControllerTest {
 
     private static RequestPostProcessor platformAdmin() {
         return jwt().authorities(new SimpleGrantedAuthority("ROLE_PLATFORM_ADMIN"));
+    }
+
+    private static RequestPostProcessor schoolScoped(UUID schoolId) {
+        return jwt().jwt(token -> token.claim("school_id", schoolId.toString()));
+    }
+
+    private static RequestPostProcessor ownerScoped(UUID schoolId) {
+        return jwt().authorities(new SimpleGrantedAuthority("ROLE_OWNER"))
+                .jwt(token -> token.claim("school_id", schoolId.toString()));
     }
 
     private BranchResponse responseOf(UUID id, UUID schoolId) {

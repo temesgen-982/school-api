@@ -12,3 +12,6 @@ variables:
   - name: branchId
     value: ""
     description: UUID used in branch path parameters
+  - name: userId
+    value: ""
+    description: UUID of the user to fetch or transfer ownership to

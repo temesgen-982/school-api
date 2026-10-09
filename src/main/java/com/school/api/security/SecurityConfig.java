@@ -34,8 +34,13 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/actuator/health", "/actuator/info").permitAll()
                         .requestMatchers(AuthController.LOGIN).permitAll()
+                        .requestMatchers(ApiPaths.V1 + "/users/**")
+                                .hasRole(Role.PLATFORM_ADMIN.name())
                         .requestMatchers(HttpMethod.GET, ApiPaths.BASE + "/**").authenticated()
-                        .requestMatchers(ApiPaths.BASE + "/**").hasRole(Role.PLATFORM_ADMIN.name())
+                        .requestMatchers(HttpMethod.POST, ApiPaths.V1 + "/schools")
+                                .hasRole(Role.PLATFORM_ADMIN.name())
+                        .requestMatchers(ApiPaths.BASE + "/**")
+                                .hasAnyRole(Role.PLATFORM_ADMIN.name(), Role.OWNER.name())
                         .anyRequest().authenticated())
                 .oauth2ResourceServer(oauth2 -> oauth2
                         .jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthenticationConverter())));
@@ -48,9 +53,10 @@ public class SecurityConfig {
     }
 
     /**
-     * Maps the {@code roles} claim ({@code PLATFORM_ADMIN}, {@code SCHOOL_ADMIN}) to the
-     * {@code ROLE_} authorities used by {@code hasRole(...)}. Tokens without roles are
-     * already rejected by the decoder, so the mapping itself never fails.
+     * Maps the {@code roles} claim ({@code PLATFORM_ADMIN}, {@code SCHOOL_ADMIN},
+     * {@code OWNER}) to the {@code ROLE_} authorities used by {@code hasRole(...)}.
+     * Tokens without roles are already rejected by the decoder, so the mapping itself
+     * never fails.
      */
     private static Converter<Jwt, AbstractAuthenticationToken> jwtAuthenticationConverter() {
         JwtAuthenticationConverter converter = new JwtAuthenticationConverter();

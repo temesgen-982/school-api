@@ -16,6 +16,8 @@ import com.school.api.school.SchoolRepository;
 import com.school.api.user.UserAccount;
 import com.school.api.user.UserAccountRepository;
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 import javax.crypto.SecretKey;
@@ -39,8 +41,9 @@ import org.springframework.test.web.servlet.MockMvc;
 
 /**
  * End-to-end check of the auth plumbing against the real database: login issues a
- * token the resource server accepts, the role rules are enforced on the wire, and
- * audit columns capture who deactivated a resource.
+ * token the resource server accepts, the role rules are enforced on the wire,
+ * school-scoped callers are confined to their own school, and audit columns capture
+ * who deactivated a resource.
  */
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -67,32 +70,33 @@ class AuthFlowIntegrationTest {
     private JwtDecoder jwtDecoder;
 
     private UserAccount createdUser;
-    private UUID createdSchoolId;
+    private final List<UUID> createdSchoolIds = new ArrayList<>();
 
     @AfterEach
     void cleanUp() {
-        if (createdSchoolId != null) {
-            schoolRepository.findById(createdSchoolId).ifPresent(schoolRepository::delete);
-            createdSchoolId = null;
-        }
         if (createdUser != null) {
             userAccountRepository.delete(createdUser);
             createdUser = null;
         }
+        createdSchoolIds.forEach(id -> schoolRepository.findById(id).ifPresent(schoolRepository::delete));
+        createdSchoolIds.clear();
     }
 
     @Test
     void loginIssuesTokenThatPassesSecurityRules() throws Exception {
         String username = newUsername();
-        createdUser = saveUser(username, "s3cret-pass", Role.SCHOOL_ADMIN);
+        UUID schoolId = saveSchool();
+        createdUser = saveUser(username, "s3cret-pass", Role.SCHOOL_ADMIN, schoolId);
 
         String token = login(username, "s3cret-pass");
         Jwt jwt = jwtDecoder.decode(token);
         assertThat(jwt.getSubject()).isEqualTo(username);
         assertThat(jwt.getClaimAsStringList("roles")).containsExactly("SCHOOL_ADMIN");
         assertThat(jwt.getClaimAsString("user_id")).isEqualTo(createdUser.getId().toString());
+        assertThat(jwt.getClaimAsString("school_id")).isEqualTo(schoolId.toString());
 
-        mockMvc.perform(get(SCHOOLS).header(HttpHeaders.AUTHORIZATION, "Bearer " + token))
+        mockMvc.perform(get(SCHOOLS + "/" + schoolId)
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + token))
                 .andExpect(status().isOk());
 
         mockMvc.perform(get(SCHOOLS))
@@ -108,9 +112,34 @@ class AuthFlowIntegrationTest {
     }
 
     @Test
+    void schoolScopedTokenCannotReachOtherSchoolsOrCollections() throws Exception {
+        String username = newUsername();
+        UUID schoolId = saveSchool();
+        UUID otherSchoolId = saveSchool();
+        createdUser = saveUser(username, "s3cret-pass", Role.SCHOOL_ADMIN, schoolId);
+        String token = login(username, "s3cret-pass");
+
+        mockMvc.perform(get(SCHOOLS + "/" + schoolId)
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + token))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(get(SCHOOLS + "/" + otherSchoolId)
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + token))
+                .andExpect(status().isForbidden());
+
+        mockMvc.perform(get(SCHOOLS)
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + token))
+                .andExpect(status().isForbidden());
+
+        mockMvc.perform(get(SCHOOLS + "/" + otherSchoolId + "/branches")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + token))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
     void loginWithWrongPasswordReturns401() throws Exception {
         String username = newUsername();
-        createdUser = saveUser(username, "s3cret-pass", Role.SCHOOL_ADMIN);
+        createdUser = saveUser(username, "s3cret-pass", Role.SCHOOL_ADMIN, null);
 
         mockMvc.perform(post(AuthController.LOGIN)
                         .contentType(MediaType.APPLICATION_JSON)
@@ -147,7 +176,7 @@ class AuthFlowIntegrationTest {
     @Test
     void deactivateRecordsDeletedAtAndDeletedBy() throws Exception {
         String username = newUsername();
-        createdUser = saveUser(username, "s3cret-pass", Role.PLATFORM_ADMIN);
+        createdUser = saveUser(username, "s3cret-pass", Role.PLATFORM_ADMIN, null);
         String token = login(username, "s3cret-pass");
         String code = "it-" + UUID.randomUUID().toString().substring(0, 8);
 
@@ -159,7 +188,8 @@ class AuthFlowIntegrationTest {
                                 """.formatted(code)))
                 .andExpect(status().isCreated())
                 .andReturn().getResponse().getContentAsString();
-        createdSchoolId = UUID.fromString(JsonPath.read(created, "$.id"));
+        UUID createdSchoolId = UUID.fromString(JsonPath.read(created, "$.id"));
+        createdSchoolIds.add(createdSchoolId);
 
         mockMvc.perform(delete(SCHOOLS + "/" + createdSchoolId)
                         .header(HttpHeaders.AUTHORIZATION, "Bearer " + token))
@@ -187,12 +217,23 @@ class AuthFlowIntegrationTest {
         return "it-" + UUID.randomUUID().toString().substring(0, 8);
     }
 
-    private UserAccount saveUser(String username, String password, Role role) {
+    private UserAccount saveUser(String username, String password, Role role, UUID schoolId) {
         UserAccount user = new UserAccount();
         user.setUsername(username);
         user.setPassword(passwordEncoder.encode(password));
         user.setStatus(Status.ACTIVE);
         user.setRoles(Set.of(role));
+        user.setSchoolId(schoolId);
         return userAccountRepository.save(user);
+    }
+
+    private UUID saveSchool() {
+        School school = new School();
+        school.setName("IT School " + UUID.randomUUID().toString().substring(0, 8));
+        school.setCode("it-" + UUID.randomUUID().toString().substring(0, 8));
+        school.setStatus(Status.ACTIVE);
+        UUID id = schoolRepository.save(school).getId();
+        createdSchoolIds.add(id);
+        return id;
     }
 }

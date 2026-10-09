@@ -1,0 +1,31 @@
+info:
+  name: POST Create User
+  type: http
+  seq: 1
+
+http:
+  method: POST
+  url: "{{baseUrl}}/users"
+  auth: inherit
+  headers:
+    - name: Content-Type
+      value: application/json
+    - name: Authorization
+      value: "Bearer {{token}}"
+  body:
+    type: json
+    data: |-
+      {
+        "username": "kinder",
+        "password": "s3cret-pass",
+        "firstName": "Kin",
+        "lastName": "Derd",
+        "roles": ["SCHOOL_ADMIN"]
+      }
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: false

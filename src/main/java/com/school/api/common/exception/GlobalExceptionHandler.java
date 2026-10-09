@@ -31,6 +31,11 @@ public class GlobalExceptionHandler {
         return problem(HttpStatus.UNAUTHORIZED, "Unauthorized", ex.getMessage(), request);
     }
 
+    @ExceptionHandler(ForbiddenException.class)
+    public ProblemDetail forbidden(ForbiddenException ex, HttpServletRequest request) {
+        return problem(HttpStatus.FORBIDDEN, "Forbidden", ex.getMessage(), request);
+    }
+
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ProblemDetail validation(MethodArgumentNotValidException ex, HttpServletRequest request) {
         ProblemDetail detail = problem(HttpStatus.BAD_REQUEST, "Validation failed",

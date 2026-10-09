@@ -2,13 +2,16 @@ package com.school.api.school;
 
 import com.school.api.common.web.ApiPaths;
 import com.school.api.common.web.PageResponse;
+import com.school.api.school.dto.OwnershipHistoryResponse;
 import com.school.api.school.dto.SchoolCreateRequest;
 import com.school.api.school.dto.SchoolPatchRequest;
 import com.school.api.school.dto.SchoolResponse;
+import com.school.api.school.dto.TransferOwnerRequest;
 import com.school.api.security.CurrentUser;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import java.net.URI;
+import java.util.List;
 import java.util.UUID;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
@@ -20,6 +23,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
@@ -58,6 +62,20 @@ public class SchoolController {
     @PatchMapping("/{id}")
     public SchoolResponse patch(@PathVariable UUID id, @Valid @RequestBody SchoolPatchRequest request) {
         return schoolService.patch(id, request);
+    }
+
+    @PutMapping("/{id}/owner")
+    public SchoolResponse transferOwner(
+            @PathVariable UUID id,
+            @Valid @RequestBody TransferOwnerRequest request,
+            Authentication authentication) {
+        return schoolService.transferOwner(
+                id, request, CurrentUser.idOf(authentication), CurrentUser.isPlatformAdmin(authentication));
+    }
+
+    @GetMapping("/{id}/owner/history")
+    public List<OwnershipHistoryResponse> ownerHistory(@PathVariable UUID id) {
+        return schoolService.ownerHistory(id);
     }
 
     @DeleteMapping("/{id}")

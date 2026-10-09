@@ -7,6 +7,7 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.Table;
+import java.util.UUID;
 
 @Entity
 @Table(name = "schools")
@@ -27,6 +28,9 @@ public class School extends BaseEntity {
 
     @Column(length = 255)
     private String email;
+
+    @Column(name = "owner_id")
+    private UUID ownerId;
 
     public String getName() {
         return name;
@@ -66,5 +70,13 @@ public class School extends BaseEntity {
 
     public void setEmail(String email) {
         this.email = email;
+    }
+
+    public UUID getOwnerId() {
+        return ownerId;
+    }
+
+    public void setOwnerId(UUID ownerId) {
+        this.ownerId = ownerId;
     }
 }

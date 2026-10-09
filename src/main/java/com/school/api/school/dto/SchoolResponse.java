@@ -12,6 +12,7 @@ public record SchoolResponse(
         Status status,
         String phone,
         String email,
+        UUID ownerId,
         Instant createdAt,
         Instant updatedAt) {
 
@@ -23,6 +24,7 @@ public record SchoolResponse(
                 school.getStatus(),
                 school.getPhone(),
                 school.getEmail(),
+                school.getOwnerId(),
                 school.getCreatedAt(),
                 school.getUpdatedAt());
     }
