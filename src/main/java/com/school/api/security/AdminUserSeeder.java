@@ -42,7 +42,8 @@ public class AdminUserSeeder implements ApplicationRunner {
         UserAccount admin = new UserAccount();
         admin.setUsername(adminProperties.username());
         admin.setPassword(passwordEncoder.encode(adminProperties.password()));
-        admin.setFullName("Platform Admin");
+        admin.setFirstName("Platform");
+        admin.setLastName("Admin");
         admin.setStatus(Status.ACTIVE);
         admin.setRoles(Set.of(Role.PLATFORM_ADMIN));
         userAccountRepository.save(admin);

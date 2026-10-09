@@ -26,8 +26,14 @@ public class UserAccount extends BaseEntity {
     @Column(nullable = false, length = 100)
     private String password;
 
-    @Column(name = "full_name", length = 200)
-    private String fullName;
+    @Column(name = "first_name", length = 100)
+    private String firstName;
+
+    @Column(name = "middle_name", length = 100)
+    private String middleName;
+
+    @Column(name = "last_name", length = 100)
+    private String lastName;
 
     @Column(name = "school_id")
     private UUID schoolId;
@@ -58,12 +64,28 @@ public class UserAccount extends BaseEntity {
         this.password = password;
     }
 
-    public String getFullName() {
-        return fullName;
+    public String getFirstName() {
+        return firstName;
     }
 
-    public void setFullName(String fullName) {
-        this.fullName = fullName;
+    public void setFirstName(String firstName) {
+        this.firstName = firstName;
+    }
+
+    public String getMiddleName() {
+        return middleName;
+    }
+
+    public void setMiddleName(String middleName) {
+        this.middleName = middleName;
+    }
+
+    public String getLastName() {
+        return lastName;
+    }
+
+    public void setLastName(String lastName) {
+        this.lastName = lastName;
     }
 
     public UUID getSchoolId() {
