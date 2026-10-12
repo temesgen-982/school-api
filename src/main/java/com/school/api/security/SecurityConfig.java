@@ -34,6 +34,10 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/actuator/health", "/actuator/info").permitAll()
                         .requestMatchers(AuthController.LOGIN, AuthController.SIGNUP).permitAll()
+                        // Public API docs — viewing them needs no token, calling the
+                        // endpoints they describe still does
+                        .requestMatchers("/swagger-ui.html", "/swagger-ui/**", "/v3/api-docs/**")
+                                .permitAll()
                         .requestMatchers(ApiPaths.V1 + "/users/**")
                                 .hasRole(Role.PLATFORM_ADMIN.name())
                         .requestMatchers(HttpMethod.GET, ApiPaths.BASE + "/**").authenticated()
