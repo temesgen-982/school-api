@@ -19,6 +19,11 @@ server:
     # Don't keep the JPA session open for the whole HTTP request
     open-in-view: false
 
+# Browser origins allowed by CORS (comma-separated). Default covers the
+# Next.js dev server; override with ALLOWED_ORIGINS for production frontends.
+allowed:
+  origins: ${ALLOWED_ORIGINS:http://localhost:3000}
+
 # JWT login and bearer-token authentication
 auth:
   jwt:

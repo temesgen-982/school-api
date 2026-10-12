@@ -4,8 +4,10 @@ import com.school.api.auth.AuthController;
 import com.school.api.common.domain.Role;
 import com.school.api.common.web.ApiPaths;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.convert.converter.Converter;
@@ -21,10 +23,20 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
+
+    /** Comma-separated browser origins allowed by CORS ({@code ALLOWED_ORIGINS}). */
+    private final String allowedOrigins;
+
+    public SecurityConfig(@Value("${allowed.origins:http://localhost:3000}") String allowedOrigins) {
+        this.allowedOrigins = allowedOrigins;
+    }
 
     @Bean
     SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -46,9 +58,36 @@ public class SecurityConfig {
                         .requestMatchers(ApiPaths.BASE + "/**")
                                 .hasAnyRole(Role.PLATFORM_ADMIN.name(), Role.OWNER.name())
                         .anyRequest().authenticated())
+                // CORS: preflights are answered here, before authorization, so
+                // browser clients on allowed origins can call the API
+                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .oauth2ResourceServer(oauth2 -> oauth2
                         .jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthenticationConverter())));
         return http.build();
+    }
+
+    /**
+     * Allows the browser origins listed in {@code allowed.origins}
+     * ({@code ALLOWED_ORIGINS}, comma-separated; defaults to the Next.js dev
+     * server) to call the API. Bearer-token auth means no cookies are involved,
+     * so credentials are not allowed. {@code Location} is exposed because the
+     * create endpoints return it with their {@code 201} responses.
+     */
+    @Bean
+    CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration config = new CorsConfiguration();
+        config.setAllowedOrigins(
+                Arrays.stream(allowedOrigins.split(","))
+                        .map(String::trim)
+                        .filter(origin -> !origin.isEmpty())
+                        .toList());
+        config.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE"));
+        config.setAllowedHeaders(List.of("Authorization", "Content-Type"));
+        config.setExposedHeaders(List.of("Location"));
+        config.setMaxAge(3600L);
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", config);
+        return source;
     }
 
     @Bean
