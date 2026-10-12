@@ -12,17 +12,17 @@ services:
     envVars:
       # Supabase connection string, e.g.
       # jdbc:postgresql://db.<ref>.supabase.co:5432/postgres?sslmode=require
-      - name: SPRING_DATASOURCE_URL
+      - key: SPRING_DATASOURCE_URL
         sync: false
-      - name: SPRING_DATASOURCE_USERNAME
+      - key: SPRING_DATASOURCE_USERNAME
         sync: false
-      - name: SPRING_DATASOURCE_PASSWORD
+      - key: SPRING_DATASOURCE_PASSWORD
         sync: false
       # HS256 signing key, >= 32 chars (openssl rand -base64 48).
       # Without it every restart invalidates all issued tokens.
-      - name: AUTH_JWT_SECRET
+      - key: AUTH_JWT_SECRET
         sync: false
       # Seeded by AdminUserSeeder on FIRST boot only, while users table is
       # empty. Set before the first deploy.
-      - name: AUTH_ADMIN_PASSWORD
+      - key: AUTH_ADMIN_PASSWORD
         sync: false
