@@ -1,0 +1,19 @@
+# Keep the Docker build context small and the image free of local artifacts
+.git
+target
+.mvn
+mvnw
+mvnw.cmd
+compose.yaml
+Dockerfile
+.dockerignore
+render.yaml
+api-collection
+.idea
+.settings
+.classpath
+.project
+.vscode
+HELP.md
+AGENTS.md
+*.md

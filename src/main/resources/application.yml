@@ -2,6 +2,10 @@ spring:
   application:
     name: api
 
+# Render forwards traffic to $PORT (default 10000); locally we fall back to 8080
+server:
+  port: ${PORT:8080}
+
   # PostgreSQL connection (database is provisioned by compose.yaml)
   datasource:
     url: jdbc:postgresql://localhost:5432/school
