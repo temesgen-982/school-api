@@ -1,0 +1,48 @@
+info:
+  name: POST Signup
+  type: http
+  seq: 2
+
+http:
+  method: POST
+  url: "{{baseUrl}}/auth/register"
+  auth: none
+  headers:
+    - name: Content-Type
+      value: application/json
+  body:
+    type: json
+    data: |-
+      {
+        "owner": {
+          "username": "owner-demo",
+          "password": "s3cret-pass",
+          "firstName": "Ola",
+          "lastName": "Nordmann"
+        },
+        "school": {
+          "name": "Demo School",
+          "code": "demo-school",
+          "email": "hello@demo.school"
+        },
+        "branches": [
+          {
+            "name": "Main Campus",
+            "code": "main",
+            "primary": true,
+            "city": "Oslo"
+          },
+          {
+            "name": "Annex",
+            "code": "annex",
+            "city": "Bergen"
+          }
+        ]
+      }
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: false

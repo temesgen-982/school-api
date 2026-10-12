@@ -33,7 +33,7 @@ public class SecurityConfig {
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/actuator/health", "/actuator/info").permitAll()
-                        .requestMatchers(AuthController.LOGIN).permitAll()
+                        .requestMatchers(AuthController.LOGIN, AuthController.SIGNUP).permitAll()
                         .requestMatchers(ApiPaths.V1 + "/users/**")
                                 .hasRole(Role.PLATFORM_ADMIN.name())
                         .requestMatchers(HttpMethod.GET, ApiPaths.BASE + "/**").authenticated()
